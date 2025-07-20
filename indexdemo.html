@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Quiz</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="quiz-container">
+    <!-- Start Page -->
+    <div id="start-box">
+      <h1>🧠 Welcome to the Quiz</h1>
+      <p>Test your knowledge with 5 fun and challenging questions!</p>
+      <button id="startBtn">🚀 Start Quiz</button>
+    </div>
+
+    <!-- Quiz Box -->
+    <div id="quiz-box" class="hide">
+      <div id="status"></div>
+      <div id="progress-bar-wrapper">
+        <div id="progress-bar"></div>
+      </div>
+      <h2 id="question"></h2>
+      <ul id="answers"></ul>
+      <p id="timer">⏳ Time Left: <span id="time">10</span>s</p>
+      <button id="nextBtn">Next</button>
+    </div>
+
+    <!-- Result Box -->
+    <div id="result-box" class="hide">
+      <h2>🎉 Quiz Completed!</h2>
+      <p id="score"></p>
+      <button id="restartBtn">🔁 Restart Quiz</button>
+    </div>
+  </div>
+
+  <script>
+    const originalQuizData = [
+      {
+        question: "What is the capital of India?",
+        choices: ["Mumbai", "New Delhi", "Hyderabad", "Chennai"],
+        answer: "New Delhi"
+      },
+      {
+        question: "Which planet is known as the Red Planet?",
+        choices: ["Earth", "Venus", "Mars", "Jupiter"],
+        answer: "Mars"
+      },
+      {
+        question: "Which language runs in a web browser?",
+        choices: ["Java", "C", "Python", "JavaScript"],
+        answer: "JavaScript"
+      },
+      {
+        question: "Who is the founder of Microsoft?",
+        choices: ["Steve Jobs", "Elon Musk", "Bill Gates", "Mark Zuckerberg"],
+        answer: "Bill Gates"
+      },
+      {
+        question: "Which tag is used for the largest heading in HTML?",
+        choices: ["<h1>", "<head>", "<h6>", "<title>"],
+        answer: "<h1>"
+      }
+    ];
+
+    let quizData = [];
+    const startBox = document.getElementById('start-box');
+    const quizBox = document.getElementById('quiz-box');
+    const resultBox = document.getElementById('result-box');
+    const questionEl = document.getElementById('question');
+    const answersEl = document.getElementById('answers');
+    const timerEl = document.getElementById('time');
+    const nextBtn = document.getElementById('nextBtn');
+    const scoreEl = document.getElementById('score');
+    const restartBtn = document.getElementById('restartBtn');
+    const startBtn = document.getElementById('startBtn');
+    const statusEl = document.getElementById('status');
+    const progressBar = document.getElementById('progress-bar');
+
+    let currentIndex = 0;
+    let score = 0;
+    let timeLeft = 10;
+    let timer;
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    startBtn.addEventListener('click', () => {
+      quizData = shuffleArray([...originalQuizData]);
+      currentIndex = 0;
+      score = 0;
+      startBox.classList.add('hide');
+      quizBox.classList.remove('hide');
+      showQuestion();
+    });
+
+    function showQuestion() {
+      clearInterval(timer);
+      resetState();
+
+      const currentQuestion = quizData[currentIndex];
+      statusEl.innerText = `Question ${currentIndex + 1} of ${quizData.length}`;
+      questionEl.innerText = currentQuestion.question;
+
+      const shuffledChoices = shuffleArray([...currentQuestion.choices]);
+      shuffledChoices.forEach(choice => {
+        const li = document.createElement('li');
+        const button = document.createElement('button');
+        button.innerText = choice;
+        button.classList.add('answer-btn');
+        button.onclick = () => selectAnswer(button, currentQuestion.answer);
+        li.appendChild(button);
+        answersEl.appendChild(li);
+      });
+
+      updateProgressBar();
+      timeLeft = 10;
+      timerEl.innerText = timeLeft;
+      timer = setInterval(() => {
+        timeLeft--;
+        timerEl.innerText = timeLeft;
+        if (timeLeft === 0) {
+          clearInterval(timer);
+          nextQuestion();
+        }
+      }, 1000);
+    }
+
+    function updateProgressBar() {
+      const progress = ((currentIndex) / quizData.length) * 100;
+      progressBar.style.width = `${progress}%`;
+    }
+
+    function resetState() {
+      nextBtn.disabled = true;
+      answersEl.innerHTML = '';
+    }
+
+    function selectAnswer(button, correctAnswer) {
+      clearInterval(timer);
+      const buttons = document.querySelectorAll('.answer-btn');
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        if (btn.innerText === correctAnswer) {
+          btn.classList.add('correct');
+        } else {
+          btn.classList.add('wrong');
+        }
+      });
+      if (button.innerText === correctAnswer) {
+        score++;
+      }
+      nextBtn.disabled = false;
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex < quizData.length) {
+        showQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    function showResult() {
+      quizBox.classList.add('hide');
+      resultBox.classList.remove('hide');
+      scoreEl.innerText = `You scored ${score} out of ${quizData.length}`;
+    }
+
+    nextBtn.addEventListener('click', nextQuestion);
+    restartBtn.addEventListener('click', () => {
+      quizData = shuffleArray([...originalQuizData]);
+      score = 0;
+      currentIndex = 0;
+      resultBox.classList.add('hide');
+      quizBox.classList.remove('hide');
+      showQuestion();
+    });
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(to right, #74ebd5, #acb6e5);
+      margin: 0;
+    }
+    .quiz-container {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    .answer-btn {
+      width: 100%;
+      margin: 5px 0;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #1a3db2;
+      border-radius: 5px;
+      background-color: #1cadad;
+      cursor: pointer;
+    }
+    .correct {
+      background-color: #d4edda;
+      border-color: #28a745;
+      color: #155724;
+    }
+    .wrong {
+      background-color: #f8d7da;
+      border-color: #dc3545;
+      color: #721c24;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #progress-bar-wrapper {
+      width: 100%;
+      background-color: #e0e0e0;
+      height: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0;
+      background-color: #4caf50;
+      border-radius: 5px;
+      transition: width 0.4s ease;
+    }
+    .hide {
+      display: none;
+    }
+  </style>
+</body>
+</html>
